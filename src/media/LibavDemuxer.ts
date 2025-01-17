@@ -279,9 +279,11 @@ export async function demux(input: Readable) {
         }, `Found audio stream in input ${filename}`)
     }
 
+    let paused = false;
+
     const readFrame = pDebounce.promise(async () => {
         let resume = true;
-        while (resume) {
+        while (resume && !paused) {
             const [status, streams] = await libav.ff_read_frame_multi(fmt_ctx, pkt, {
                 limit: 1,
                 unify: true
@@ -335,9 +337,20 @@ export async function demux(input: Readable) {
         loggerFrameAudio.trace("Audio pipe drained");
         readFrame();
     });
+
     readFrame();
+
     return {
         video: vInfo ? { ...vInfo, stream: vPipe as Readable } : undefined,
-        audio: aInfo ? { ...aInfo, stream: aPipe as Readable } : undefined
+        audio: aInfo ? { ...aInfo, stream: aPipe as Readable } : undefined,
+        pause: () => {
+            paused = true;
+        },
+        resume: () => {
+            paused = false;
+
+            // the loop exited, need to restart it
+            readFrame();
+        }
     }
 }

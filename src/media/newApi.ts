@@ -303,7 +303,7 @@ export async function playStream(
     if (!streamer.voiceConnection)
         throw new Error("Bot is not connected to a voice channel");
 
-    const { video, audio } = await demux(input);
+    const { video, audio, pause, resume } = await demux(input);
     if (!video)
         throw new Error("No video stream in media");
 
@@ -390,12 +390,12 @@ export async function playStream(
         vStream.syncStream = aStream;
         aStream.syncStream = vStream;
     }
-    return new Promise<void>((resolve) => {
-        vStream.once("finish", () => {
-            stopStream();
-            udp.mediaConnection.setSpeaking(false);
-            udp.mediaConnection.setVideoStatus(false);
-            resolve();
-        });
+
+    vStream.once("finish", () => {
+        stopStream();
+        udp.mediaConnection.setSpeaking(false);
+        udp.mediaConnection.setVideoStatus(false);
     });
+
+    return { pause, resume };
 }
