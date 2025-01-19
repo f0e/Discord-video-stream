@@ -293,7 +293,7 @@ export abstract class BaseMediaConnection extends EventEmitter {
         }
         this.interval = setInterval(() => {
             this.sendOpcode(VoiceOpCodes.HEARTBEAT, 42069);
-        }, interval);
+        }, interval) as unknown as NodeJS.Timeout;
     }
 
     sendOpcode(code:number, data: unknown): void {
